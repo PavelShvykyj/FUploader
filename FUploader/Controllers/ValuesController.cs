@@ -1,6 +1,8 @@
-﻿using FUploader.DataLayer.APIResources;
+﻿using FUploader.Core.FireBase;
+using FUploader.DataLayer.APIResources;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Linq;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -10,43 +12,49 @@ namespace FUploader.Controllers
     [ApiController]
     public class UploderController : ControllerBase
     {
-        // GET: api/<UploderController>
-        [HttpGet]
-        public IEnumerable<string> Get()
-        {
-            return new string[] { "value1", "value2" };
-        }
+        FirebaseAuth _fbauth;
+        UploadManager _fbuploader;
 
-        // GET api/<UploderController>/5
-        [HttpGet("{id}")]
-        public string Get(int id)
+        public UploderController(FirebaseAuth fbauth, UploadManager fbuploader)
         {
-            return "value";
+            _fbauth = fbauth;
+            _fbuploader = fbuploader;    
         }
-
-        // POST api/<UploderController>
+      
         [HttpPost]
-        public IResult uploadFiles([FromBody] UploadTask uploadtask)
+        public async Task<IResult> UploadFile([FromBody] UploadTask uploadtask)
+        {
+            
+            
+            if (!ModelState.IsValid)
+            {
+                return Results.BadRequest();
+            }
+
+            var url = await _fbuploader.UploadFile(uploadtask.FilePath, uploadtask.Token);
+
+            return Results.Ok(new { dowloadFrom = url });
+        
+        }
+
+        [HttpPost]
+        public IResult ErrorTest()
+        {
+            throw new Exception("Exception is generated in test goal");
+        }
+
+        [HttpPost]
+        public async Task<IResult> Login([FromBody] EmailPasswordCredentional credentional)
         {
             if (!ModelState.IsValid)
             {
                 return Results.BadRequest();
             }
 
-            return Results.Json(uploadtask);
-        
+            var token = await _fbauth.Loggin(credentional.Email, credentional.Password);
+
+            return Results.Ok(new { token = token });
         }
 
-        // PUT api/<UploderController>/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
-        {
-        }
-
-        // DELETE api/<UploderController>/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
-        }
     }
 }
