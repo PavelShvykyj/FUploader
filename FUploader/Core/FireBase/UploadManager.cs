@@ -8,6 +8,9 @@ namespace FUploader.Core.FireBase
     {
         private string _uploadFolder;
         private string _bucket;
+        public delegate void FileUploadedEventHendler(bool resoltness, string resolt);
+        public event FileUploadedEventHendler OnFileUploaded;
+
 
         public UploadManager(IConfiguration configuration)
         {
@@ -16,6 +19,7 @@ namespace FUploader.Core.FireBase
         }
 
         public async Task<string> UploadFile(string localPath, string token) {
+
             using (var stream = File.Open(localPath, FileMode.Open))
             {
 
@@ -33,6 +37,9 @@ namespace FUploader.Core.FireBase
 
                 // await the task to wait until upload completes and get the download url
                 var downloadUrl = await task;
+                if (OnFileUploaded != null) {
+                    OnFileUploaded(true, downloadUrl);
+                }                
                 return downloadUrl;
             }
         }    

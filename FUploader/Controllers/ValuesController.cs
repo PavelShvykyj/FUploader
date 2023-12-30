@@ -1,4 +1,5 @@
-﻿using FUploader.Core.FireBase;
+﻿using FUploader.Core;
+using FUploader.Core.FireBase;
 using FUploader.DataLayer.APIResources;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -14,11 +15,14 @@ namespace FUploader.Controllers
     {
         FirebaseAuth _fbauth;
         UploadManager _fbuploader;
+        Notifocator _notifocator;
 
-        public UploderController(FirebaseAuth fbauth, UploadManager fbuploader)
+
+        public UploderController(FirebaseAuth fbauth, UploadManager fbuploader, Notifocator notifocator)
         {
             _fbauth = fbauth;
-            _fbuploader = fbuploader;    
+            _fbuploader = fbuploader;
+            _notifocator = notifocator;
         }
       
         [HttpPost]
@@ -32,6 +36,9 @@ namespace FUploader.Controllers
             }
 
             var url = await _fbuploader.UploadFile(uploadtask.FilePath, uploadtask.Token);
+            if (url != null) {
+                _notifocator.SendTelegramNotification(true, url);
+            }
 
             return Results.Ok(new { dowloadFrom = url });
         
